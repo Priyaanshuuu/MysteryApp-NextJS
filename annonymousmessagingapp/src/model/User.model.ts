@@ -50,10 +50,12 @@ const UserSchema: Schema<User> = new Schema({
         required: [true,"Password is required"],
     },
     verifyCode: {
+        type: String,
         required: [true,"Verify code is required"]
        
     },
     isVerified: {
+        type: Boolean,
         default: false
     },
     verifyCodeExpiry: {
