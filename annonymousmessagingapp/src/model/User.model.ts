@@ -19,6 +19,7 @@ const MessageSchema: Schema<Message> = new Schema({
         default: Date.now
     }
 })
+// The above code is the message blueprint which tells us about how the message will look like
 
 export interface User extends Document{
     username: string
@@ -28,9 +29,10 @@ export interface User extends Document{
     verifyCodeExpiry: Date;
     isVerified: boolean;
     isAcceptingMessage: boolean;
-    message: Message[]
+    message: Message[] // This means array of messages which means that user can send more than one messages
 
 }
+//The above code is nothing just a blueprint for how the users should look like
 
 const UserSchema: Schema<User> = new Schema({
     username: {
