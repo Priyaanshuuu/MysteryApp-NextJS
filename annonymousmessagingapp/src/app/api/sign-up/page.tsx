@@ -2,9 +2,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
-import Link from "next/link"
 import { useEffect, useState } from "react"
-import {useDebounceValue} from 'usehooks-ts'
+//import {useDebounceValue} from 'usehooks-ts'
 import { useToast } from "@/hooks/use-toast"
 import { useRouter } from "next/router"
 import { signUpSchema } from "@/app/schemas/signUpSchema"
@@ -15,6 +14,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import { useDebounceCallback } from "usehooks-ts"
 
 
 const  Page=()=>{
@@ -22,7 +22,8 @@ const  Page=()=>{
   const [usernameMessage, setUsernameMessage]= useState('')
   const [isCheckingUsername, setIsCheckingUsername]=useState(false)
   const [isSubmitting, setIsSubmitting]= useState(false)
-  const debounceduserName = useDebounceValue(username,300)
+
+  const debounced = useDebounceCallback(setUsername,300)
   const{ toast} = useToast()
   const router = useRouter();
 
@@ -36,11 +37,11 @@ const  Page=()=>{
   })
    useEffect(()=>{
     const checkUsernameUnique = async()=>{
-      if(debounceduserName){
+      if(username){
         setIsCheckingUsername(true)
         setUsernameMessage('')
         try {
-          await axios.get(`/api/check-username-unique?username=${debounceduserName}`)
+          await axios.get(`/api/check-username-unique?username=${username}`)
           setUsernameMessage(response.data.message)
         } catch (error) {
           const axiosError = error as AxiosError<ApiResponse>
@@ -54,7 +55,7 @@ const  Page=()=>{
       }
     }
     checkUsernameUnique()
-   },[debounceduserName])
+   },[username])
 
    const onSubmit = async (data: z.infer<typeof signUpSchema>)=>{
     setIsSubmitting(true)
@@ -69,7 +70,7 @@ const  Page=()=>{
     } catch (error) {
       console.error("Error in singup the user",error)
       const axiosError = error as AxiosError<ApiResponse>;
-      let errorMessage = axiosError.response?.data.message
+      const errorMessage = axiosError.response?.data.message
       toast({
         title: "Signup Failed",
         description: errorMessage,
@@ -102,10 +103,15 @@ const  Page=()=>{
                 <Input placeholder="username"
                 onChange={(e) => {
                   field.onChange(e)
-                  setUsername(e.target.value)
+                  debounced(e.target.value)
                 }}
                 {...field} />
               </FormControl>
+              {isCheckingUsername && <Loader2 className="animate-spin" />}
+              <p className={`text-sm ${usernameMessage==="Username is unique"? 'text-green-500':'text-red-500'}`}>
+                test {usernameMessage}
+              </p>
+
               <FormDescription>
                 This is your public display name.
               </FormDescription>
