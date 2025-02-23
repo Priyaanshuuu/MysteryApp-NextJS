@@ -70,7 +70,7 @@ export async function POST(request: Request){
         if(!emailResponse){
             return Response.json({
                 success: false,
-                message: "Error im sending the Email"
+                message: "Error in sending the Email"
             },{status:500})
         }
         return Response.json({

@@ -3,7 +3,7 @@ import React from 'react'
 function page() {
   return (
     <div>
-      SignIn page
+      <h1>Signin page</h1>
     </div>
   )
 }

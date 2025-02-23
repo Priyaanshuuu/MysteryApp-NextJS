@@ -1,38 +1,32 @@
-
 import mongoose from "mongoose";
+import dotenv from "dotenv"
 
 type ConnectionObject = {
-    isConnected?: number
-}
-//type is a ts property that define what type of data we're putting here
-// This property is optional as ? is used
-// It may use isConnected as the type or may not
+  isConnected?: number;
+};
 
-const connection : ConnectionObject= {}
-//created an object named connection which uses ConnectionObject as the type 
+const connection: ConnectionObject = {};
 
 async function dbConnect(): Promise<void> {
-    // Promise<void> this means that here no value is returned only actions or tasks will be returned
-    if(connection.isConnected){
-        console.log("Already connected to database");
-        return
-    }
-    try {
-        const db = await mongoose.connect(process.env.MONGODB_URI || "",{}
-        )
-        connection.isConnected = db.connections[0].
-        readyState
-        //readystate tells us whether the connection is established or not by showing 1 or 0 respectively
+  if (connection.isConnected) {
+    console.log("✅ Already connected to database");
+    return;
+  }
+  try {
+    console.log("🔄 Connecting to MongoDB...");
+    
+    const db = await mongoose.connect(process.env.MONGODB_URI || "", {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
 
-        console.log("DB is connected successfully");
-        
-    } catch (error) {
-        
-    console.log("Database connection failed",error);
+    connection.isConnected = db.connections[0].readyState;
+    console.log("✅ DB is connected successfully");
 
-    process.exit(1)
-    // process.exit means when failure hits this will exit the project by showing the error as 1 
-    }
+  } catch (error: any) {
+    console.error("❌ Database connection failed:", error.message);
+    process.exit(1); // Stop process on failure
+  }
 }
 
-export default dbConnect; 
+export default dbConnect;
