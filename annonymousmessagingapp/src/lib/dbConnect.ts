@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
-//import dotenv from "dotenv"
+import dotenv from "dotenv";
+
+dotenv.config();
 
 type ConnectionObject = {
   isConnected?: number;
@@ -12,20 +14,23 @@ async function dbConnect(): Promise<void> {
     console.log("✅ Already connected to database");
     return;
   }
+
+  if (!process.env.MONGODB_URI) {
+    throw new Error("❌ MONGODB_URI environment variable is not defined");
+  }
+
   try {
     console.log("🔄 Connecting to MongoDB...");
-    
-    const db = await mongoose.connect(process.env.MONGODB_URI || "", {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+
+    const db = await mongoose.connect(process.env.MONGODB_URI);
 
     connection.isConnected = db.connections[0].readyState;
-    console.log("✅ DB is connected successfully");
+    
+    console.log(`✅ DB connected successfully to: ${db.connection.host}`);
 
-  } catch (error: any) {
-    console.error("❌ Database connection failed:", error.message);
-    process.exit(1); // Stop process on failure
+  } catch (error) {
+    console.error("❌ Database connection failed:", error);
+    process.exit(1); // Exit process on failure
   }
 }
 
