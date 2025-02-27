@@ -6,10 +6,11 @@ import { getToken } from 'next-auth/jwt'
 export { default } from "next-auth/middleware"
 
 export async function middleware(request: NextRequest) {
-    const token = await getToken({ req: request })
+    const token = await getToken({ req: request }) // user will get the token only when the user is logged in
     const url = request.nextUrl
 
     // 1. Allow access to auth pages if user is NOT authenticated
+    // !token means the user is logged out
     if (!token && (
         url.pathname.startsWith('/sign-in') || 
         url.pathname.startsWith('/sign-up') || 
@@ -19,6 +20,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // 2. Redirect authenticated users AWAY from sign-in/up/verify to /home
+    // Redirect to home page if the user is logged in
     if (token && (
         url.pathname.startsWith('/sign-in') || 
         url.pathname.startsWith('/sign-up') || 
@@ -28,6 +30,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // 3. Redirect unauthenticated users from protected pages (like dashboard/home) to /sign-in
+    // if the user ain't logged in then redirect the user to signin page
     if (!token && (
         url.pathname.startsWith('/dashboard') || 
         url.pathname.startsWith('/home')
