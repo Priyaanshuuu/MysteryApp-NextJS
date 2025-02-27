@@ -29,13 +29,13 @@ const Page = () => {
     const [isCheckingUsername, setIsCheckingUsername] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const debounced = useDebounceCallback((value) => setUsername(value), 300);
+    const debounced = useDebounceCallback((value) => setUsername(value), 300); // it is hook that will make a single API for the username uniquness checking whether the name is unique or not. The API will only be generated unless the user stops typing
 
     const { toast } = useToast();
     const router = useRouter();
 
     const form = useForm<z.infer<typeof signUpSchema>>({
-        resolver: zodResolver(signUpSchema), // Fixed typo
+        resolver: zodResolver(signUpSchema), // zodresolver is used for the valitaion of the form much easier as it is a combination of zod and react-hook-form
         defaultValues: {
             username: "",
             email: "",
@@ -50,7 +50,7 @@ const Page = () => {
                 setUsernameMessage("");
                 try {
                     const response = await axios.get(
-                        `/api/check-username-unique?username=${username}`
+                        `/api/check-username-unique?username=${username}`// here get method is used because we want to get the data from the database/backend
                     );
                     setUsernameMessage(response.data.message);
                 } catch (error) {
@@ -69,7 +69,7 @@ const Page = () => {
     const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
         setIsSubmitting(true);
         try {
-            const response = await axios.post<ApiResponse>("/api/sign-up", data);
+            const response = await axios.post<ApiResponse>("/api/sign-up", data);// here the data needs to be stored in the backend
             toast({
                 title: "Success",
                 description: response.data.message,
