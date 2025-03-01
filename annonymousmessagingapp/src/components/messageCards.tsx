@@ -19,16 +19,33 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from './ui/button'
+import { X } from 'lucide-react'
+import axios from 'axios'
+import { ApiResponse } from '@/types/ApiResponse'
 
+type MessageCardProps = {
+    message: Message;
+    onMessageDelete: (messageId: string) => void;
+}
+const MessageCard = ({message, onMessageDelete}:MessageCardProps) => {
+    const {toast} = useToast()
+    const handleDeleteConfirm = async () => {
+        axios.delete<ApiResponse>(`/api/delete-message/${message._id}`)
+        toast({
+            title: response.data.message,
+        })
+        
+    }
+}
 
-function messageCards() {
+function messageCards({message, onMessageDelete}: MessageCardProps) {
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Card Title</CardTitle>
                 <AlertDialog>
                     <AlertDialogTrigger><Button variant = "destructive">
-                        
+                        <X className='w-5 h-5' />
                         </Button>
                         </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -40,8 +57,8 @@ function messageCards() {
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction>Continue</AlertDialogAction>
+                            <AlertDialogCancel onClick={handleDeleteConfirm}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction >Continue</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
