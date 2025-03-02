@@ -71,6 +71,7 @@ const Page = () => {
     }
     finally {
       setIsSwitchingLoading(false)
+      setIsLoading(false)
     }
 
   },[])
