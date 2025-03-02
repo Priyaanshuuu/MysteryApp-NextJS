@@ -49,6 +49,32 @@ const Page = () => {
     setMessages((prevMessages) => prevMessages.filter(message => message.id !== messageId))
   }
 
+  const fetchMessages = useCallback(async (refresh: boolean = false) => {
+    setIsLoading(true)
+    setIsSwitchingLoading(false)
+    try {
+      const response = await axios.get<ApiResponse>('/api/get-messages')
+      setMessages(response.data.messages || [])
+      if(refresh){
+        toast({
+          title: 'Refreshed messages',
+          description: 'Showing refreshed messages',
+        })
+      }
+      
+    } catch (error) {
+      const axiosError = error as AxiosError<ApiResponse>
+      toast({
+        title: 'Error',
+        description: axiosError.response?.data.message || 'Failed to fetch message settings',
+        variant: 'destructive'})
+    }
+    finally {
+      setIsSwitchingLoading(false)
+    }
+
+  },[])
+
   return (
     <div>
       The dashboard page
