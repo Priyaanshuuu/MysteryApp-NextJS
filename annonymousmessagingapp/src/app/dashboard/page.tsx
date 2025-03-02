@@ -1,7 +1,7 @@
 'use client'
 
 import { Message } from '@/model/User.model'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useToast } from '@/components/ui/toast'
 import { useSession } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
@@ -10,6 +10,7 @@ import { AcceptMessageSchema } from '../schemas/acceptMessageSchema'
 import axios from 'axios'
 import { ApiResponse } from '@/types/ApiResponse'
 import { AxiosError } from 'axios'
+import { User } from 'next-auth'
 
 const Page = () => {
   const [messages, setMessages] = useState<Message[]>([])
@@ -74,7 +75,53 @@ const Page = () => {
       setIsLoading(false)
     }
 
-  },[])
+  },[setIsLoading, setMessages])
+
+  useEffect(() => {
+    if(!session || !session.user){
+      fetchMessages()
+    }
+
+  }
+  ,[session, setValue, fetchAcceptMessage, fetchMessages])
+
+  const handleSwitchChange = async () => {
+  try {
+    const response = await axios.post<ApiResponse>('/api/accept-messages', {
+      acceptMessages: !acceptMessages
+    })
+    setValue('acceptMessages', !acceptMessages)
+    toast({
+      title: response.data.message,
+      variant: "destructive"
+    })
+  } catch (error) {
+    const axiosError = error as AxiosError<ApiResponse>
+    toast({
+      title: 'Error',
+      description: axiosError.response?.data.message || 'Failed to update message settings',
+      variant: 'destructive'
+    })
+    
+  }
+  }
+
+  const {username} = session?.user as User
+  const baseUrl = `${window.location.protocol}//${window.location.host}`
+
+  const profileUrl = `${baseUrl}/u/${username}`
+
+  const copyToClipboard =  () => {
+    navigator.clipboard.writeText(profileUrl)
+    toast({
+      title: 'Copied to clipboard',
+      description: 'Your profile URL has been copied to clipboard'
+  })
+
+  if(!session || !session.user){
+    return <div>Please Login</div>
+  }
+
 
   return (
     <div>
