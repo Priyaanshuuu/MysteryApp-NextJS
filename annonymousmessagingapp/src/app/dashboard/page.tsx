@@ -128,6 +128,6 @@ const Page = () => {
       The dashboard page
     </div>
   )
-}
+}}
 
 export default Page

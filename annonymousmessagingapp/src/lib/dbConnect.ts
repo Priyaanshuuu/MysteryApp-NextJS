@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 
+
 dotenv.config();
 
 type ConnectionObject = {
@@ -17,6 +18,8 @@ async function dbConnect(): Promise<void> {
 
   if (!process.env.MONGODB_URI) {
     throw new Error("❌ MONGODB_URI environment variable is not defined");
+    //console.log(Error.message);
+    
   }
 
   try {
@@ -30,6 +33,8 @@ async function dbConnect(): Promise<void> {
 
   } catch (error) {
     console.error("❌ Database connection failed:", error);
+    
+    
     process.exit(1); // Exit process on failure
   }
 }
