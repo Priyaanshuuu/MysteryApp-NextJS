@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { useState } from "react";
 //import { Toast } from "@/components/ui/toast";
 //import { useDebounceCallback } from "usehooks-ts";
 
@@ -28,6 +29,7 @@ const Page = () => {
    
 
     //const debounced = useDebounceCallback((value) => setUsername(value), 300);
+    const[loading, setLoading] = useState(false);
 
     const { toast } = useToast();
     const router = useRouter();
@@ -98,14 +100,11 @@ const Page = () => {
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit">
-                             (
-                                <>
+                        <Button type="submit" disabled={loading}>
+                            {loading ? <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
                                 </>
-                            ) : (
-                                Sign Up
-                            )
+                                 : "Sign in"}
                         </Button>
                     </form>
                 </Form>
