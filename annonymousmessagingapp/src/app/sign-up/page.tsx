@@ -69,7 +69,8 @@ const Page = () => {
     const onSubmit = async (data: z.infer<typeof signUpSchema>) => {
         setIsSubmitting(true);
         try {
-            const response = await axios.post<ApiResponse>("/api/sign-up", data);// here the data needs to be stored in the backend
+            const response = await axios.post(
+                `${window.location.origin}/api/sign-up`, data);// here the data needs to be stored in the backend
             toast({
                 title: "Success",
                 description: response.data.message,
