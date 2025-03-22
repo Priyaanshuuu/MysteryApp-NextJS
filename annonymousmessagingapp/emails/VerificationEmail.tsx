@@ -1,104 +1,63 @@
 import {
   Html,
   Head,
+  Font,
   Preview,
   Heading,
   Row,
   Section,
   Text,
-  Button,
-  Container,
+  //Button,
 } from '@react-email/components';
-import * as React from 'react';
 
 interface VerificationEmailProps {
   username: string;
   otp: string;
-  verifyUrl: string;
 }
 
-export default function VerificationEmail({ username, otp, verifyUrl }: VerificationEmailProps) {
+export default function VerificationEmail({ username, otp }: VerificationEmailProps) {
   return (
-    <Html>
+    <Html lang="en" dir="ltr">
       <Head>
-        <style>
-          {`
-            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-            body {
-              font-family: 'Roboto', Arial, sans-serif;
-              background-color: #f9f9f9;
-              margin: 0;
-              padding: 0;
-            }
-          `}
-        </style>
+        <title>Verification Code</title>
+        <Font
+          fontFamily="Roboto"
+          fallbackFontFamily="Verdana"
+          webFont={{
+            url: 'https://fonts.gstatic.com/s/roboto/v27/KFOmCnqEu92Fr1Mu4mxKKTU1Kg.woff2',
+            format: 'woff2',
+          }}
+          fontWeight={400}
+          fontStyle="normal"
+        />
       </Head>
-      <Preview>Verify your email to complete registration!</Preview>
-      <Container
-        style={{
-          backgroundColor: '#ffffff',
-          padding: '20px',
-          borderRadius: '8px',
-          maxWidth: '600px',
-          margin: '20px auto',
-          border: '1px solid #e0e0e0',
-          textAlign: 'center',
-        }}
-      >
-        <Heading style={{ fontSize: '24px', color: '#333', marginBottom: '10px' }}>
-          Welcome, {username}!
-        </Heading>
-        <Text style={{ fontSize: '16px', color: '#555' }}>
-          Thank you for signing up. Use the OTP below to verify your email and activate your account.
-        </Text>
+      <Preview>Here&apos;s your verification code: {otp}</Preview>
+      <Section>
         <Row>
-          <Text
-            style={{
-              fontSize: '32px',
-              fontWeight: 'bold',
-              color: '#2e5cfa',
-              backgroundColor: '#e0e8ff',
-              padding: '10px 20px',
-              borderRadius: '8px',
-              display: 'inline-block',
-              letterSpacing: '2px',
-            }}
-          >
-            {otp}
+          <Heading as="h2">Hello {username},</Heading>
+        </Row>
+        <Row>
+          <Text>
+            Thank you for registering. Please use the following verification
+            code to complete your registration:
           </Text>
         </Row>
-        <Text style={{ fontSize: '14px', color: '#888', marginTop: '10px', fontStyle: 'italic' }}>
-          This OTP will expire in 10 minutes.
-        </Text>
-        <Row style={{ marginTop: '20px' }}>
-          <Button
-            href={verifyUrl}
-            style={{
-              backgroundColor: '#2e5cfa',
-              color: '#fff',
-              padding: '12px 24px',
-              textDecoration: 'none',
-              borderRadius: '5px',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              display: 'inline-block',
-            }}
-          >
-            Verify My Account
-          </Button>
+        <Row>
+          <Text>{otp}</Text> 
         </Row>
-        <Text style={{ fontSize: '14px', color: '#555', marginTop: '20px' }}>
-          If you didn’t register for an account, you can ignore this email.
-        </Text>
-      </Container>
-      <Section style={{ textAlign: 'center', fontSize: '12px', color: '#aaa', marginTop: '20px' }}>
-        <Text>© 2024 YourApp. All rights reserved.</Text>
-        <Text>
-          Need help? Contact us at{' '}
-          <a href="mailto:support@yourapp.com" style={{ color: '#2e5cfa' }}>
-            support@yourapp.com
-          </a>
-        </Text>
+        <Row>
+          <Text>
+            If you did not request this code, please ignore this email.
+          </Text>
+        </Row>
+        {/* <Row>
+          <Button
+            href={`http://localhost:3000/verify/${username}`}
+            style={{ color: '#61dafb' }}
+          >
+            Verify here
+          </Button>
+        </Row> */}
       </Section>
     </Html>
   );
