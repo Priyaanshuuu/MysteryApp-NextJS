@@ -1,87 +1,77 @@
 "use client";
+import { motion } from "framer-motion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-//import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation"; // Fixed import
-//import { signUpSchema } from "@/app/schemas/signUpSchema";
+import { useRouter } from "next/navigation";
 import { signInSchmea } from "@/app/schemas/signInSchema";
-//import axios, { AxiosError } from "axios";
-//import { ApiResponse } from "@/types/ApiResponse";
-import {
-    Form,
-    FormControl,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+//import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-//import { Toast } from "@/components/ui/toast";
-//import { useDebounceCallback } from "usehooks-ts";
 
 const Page = () => {
-   
-
-    //const debounced = useDebounceCallback((value) => setUsername(value), 300);
-    const[loading, setLoading] = useState(false);
-
+    const [loading, setLoading] = useState(false);
     const { toast } = useToast();
     const router = useRouter();
 
     const form = useForm<z.infer<typeof signInSchmea>>({
-        resolver: zodResolver(signInSchmea), // Fixed typo
+        resolver: zodResolver(signInSchmea),
         defaultValues: {
-           // username: "",
             identifier: "",
             password: "",
         },
     });
 
-
     const onSubmit = async (data: z.infer<typeof signInSchmea>) => {
-      const result = await signIn('credentials',{
-        identifier: data.identifier,
-        password: data.password
-            })
-            if(result?.error){
-             toast({
-              title: "Login failed",
-              description: "Incorrect username or password",
-              variant:"destructive"
-             })
-            }
-         if(result?.url){
-          router.replace('/dashboard')
-         }
-        
+        setLoading(true);
+        const result = await signIn("credentials", {
+            identifier: data.identifier,
+            password: data.password,
+        });
+        setLoading(false);
+        if (result?.error) {
+            toast({
+                title: "Login failed",
+                description: "Incorrect username or password",
+                variant: "destructive",
+            });
+        }
+        if (result?.url) {
+            router.replace("/dashboard");
+        }
     };
 
     return (
-        <div className="flex justify-center items-center min-h-screen bg-gray-100">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-500 to-indigo-600 p-8"
+        >
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-lg"
+            >
                 <div className="text-center">
-                    <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
-                        Join Mystery Message
-                    </h1>
-                    <p className="mb-4">Sign in to start your anonymous adventure</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
+                    <p className="text-gray-700">Sign in to continue your anonymous journey</p>
                 </div>
                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                       
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                         <FormField
                             control={form.control}
                             name="identifier"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Email</FormLabel> {}
+                                    <FormLabel>Email</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="email" {...field} />
+                                        <Input placeholder="email" {...field} className="border-gray-300 focus:ring-indigo-500" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -92,24 +82,33 @@ const Page = () => {
                             name="password"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Password</FormLabel> {/* Fixed label */}
+                                    <FormLabel>Password</FormLabel>
                                     <FormControl>
-                                        <Input type="password" placeholder="password" {...field} />
+                                        <Input type="password" placeholder="password" {...field} className="border-gray-300 focus:ring-indigo-500" />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                        <Button type="submit" disabled={loading}>
-                            {loading ? <>
+                        <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition py-3"
+                        >
+                            {loading ? (
+                                <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
                                 </>
-                                 : "Sign in"}
-                        </Button>
+                            ) : (
+                                "Sign In"
+                            )}
+                        </motion.button>
                     </form>
                 </Form>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 };
 
