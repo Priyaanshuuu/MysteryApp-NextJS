@@ -25,16 +25,16 @@ export default function Home() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="mt-6 px-6 py-3 bg-purple-600 text-white font-semibold rounded-lg shadow-md hover:bg-purple-700 transition"
-          onClick={() => router.push("/signup")}
+          onClick={() => router.push("/sign-up")}
         >
-          Get Started
+          Sign Up
         </motion.button>
         
         <p className="text-sm text-gray-600 mt-4">Already have an account? 
           <span 
             className="text-purple-500 font-medium cursor-pointer hover:underline"
-            onClick={() => router.push("/login")}
-          > Log in</span>
+            onClick={() => router.push("/sign-in")}
+          > Sign in</span>
         </p>
       </motion.div>
     </motion.div>
