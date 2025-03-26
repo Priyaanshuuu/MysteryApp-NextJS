@@ -6,8 +6,8 @@ import localFont from "next/font/local";
 import "./globals.css";
 import AuthProvider from "@/context/AuthProvider";
 import { Toaster } from "@/components/ui/toaster";
-import Navbar from '../components/Navbar'
-import { usePathname } from "next/navigation";
+//import Navbar from '../components/Navbar'
+//import { usePathname } from "next/navigation";
 
 
 const geistSans = localFont({
@@ -29,14 +29,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>)
  {
-  const pathname = usePathname();
+  //const pathname = usePathname();
   return (
     <html lang="en">
       <AuthProvider>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        { pathname ==='/sign-in' || pathname === '/sign-up' || pathname === '/'? null : <Navbar />}
+        
         {children}
         <Toaster />
       </body>
