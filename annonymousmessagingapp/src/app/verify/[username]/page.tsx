@@ -5,17 +5,18 @@ import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/comp
 import { useToast } from '@/hooks/use-toast';
 import { ApiResponse } from '@/types/ApiResponse';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Button } from '@/components/ui/button'; // 🔥 Fix: Correct Button import
+import { Button } from '@/components/ui/button';
 import axios, { AxiosError } from 'axios';
 import { useParams, useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input'; // 🔥 Fix: Correct Input import
+import { Input } from '@/components/ui/input';
 import { Form } from '@/components/ui/form';
 import * as z from 'zod';
-import { useForm } from 'react-hook-form'; // 🔥 Fix: Import useForm
+import { useForm } from 'react-hook-form';
+import { motion } from 'framer-motion';
 
-function VerifyAccount() { // 🔥 Fix: Correct Component Name
+function VerifyAccount() {
   const router = useRouter();
-  const params = useParams<{ username: string }>(); // 🔥 Fix: Correct params usage
+  const params = useParams<{ username: string }>();
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof verifySchema>>({
@@ -25,58 +26,65 @@ function VerifyAccount() { // 🔥 Fix: Correct Component Name
   const onSubmit = async (data: z.infer<typeof verifySchema>) => {
     try {
       const response = await axios.post(`/api/verify-code`, {
-        username: params.username, // 🔥 Fix: params.username used correctly
+        username: params.username,
         code: data.code,
       });
 
       toast({
-        title: "Success",
+        title: 'Success',
         description: response.data.message,
       });
 
-      router.replace('/sign-in'); // 🔥 Fix: Correct redirect path
+      router.replace('/sign-in');
     } catch (error) {
-      console.error("Error in signup of user", error);
+      console.error('Error in signup of user', error);
       const axiosError = error as AxiosError<ApiResponse>;
 
       toast({
-        title: "Signup failed",
+        title: 'Verification failed',
         description: axiosError.response?.data.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600">
+      <motion.div 
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-xl"
+      >
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl mb-6">
+          <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl text-gray-900 mb-6">
             Verify Your Account
           </h1>
-          <p className="mb-4">Enter the verification code sent to your email</p>
+          <p className="mb-4 text-gray-600">Enter the verification code sent to your email</p>
         </div>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="code" // 🔥 Fix: Correct field name
+              name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Verification Code</FormLabel>
+                  <FormLabel className="text-gray-700">Verification Code</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter code" {...field} />
+                    <Input placeholder="Enter code" {...field} className="w-full px-4 py-2 border rounded-md" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button type="submit">Submit</Button>
+            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-md">
+              Submit
+            </Button>
           </form>
         </Form>
-      </div>
+      </motion.div>
     </div>
   );
 }
 
-export default VerifyAccount; // 🔥 Fix: Correct Export Name
+export default VerifyAccount;
