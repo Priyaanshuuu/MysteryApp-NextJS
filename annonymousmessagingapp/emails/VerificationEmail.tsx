@@ -7,7 +7,6 @@ import {
   Row,
   Section,
   Text,
-  //Button,
 } from '@react-email/components';
 
 interface VerificationEmailProps {
@@ -20,6 +19,7 @@ export default function VerificationEmail({ username, otp }: VerificationEmailPr
     <Html lang="en" dir="ltr">
       <Head>
         <title>Verification Code</title>
+        <meta name="description" content="Your verification code for completing registration." />
         <Font
           fontFamily="Roboto"
           fallbackFontFamily="Verdana"
@@ -32,32 +32,55 @@ export default function VerificationEmail({ username, otp }: VerificationEmailPr
         />
       </Head>
       <Preview>Here is your verification code: {otp}</Preview>
-      <Section>
+
+      <Section style={{ padding: '20px', backgroundColor: '#f4f4f4', borderRadius: '10px' }}>
         <Row>
-          <Heading as="h2">Hello {username},</Heading>
+          <Heading as="h2" style={{ color: '#333', textAlign: 'center' }}>
+            Hello {username},
+          </Heading>
         </Row>
+
         <Row>
-          <Text>
-            Thank you for registering. Please use the following verification
-            code to complete your registration:
+          <Text style={{ fontSize: '16px', color: '#555', textAlign: 'center' }}>
+            Thank you for registering. Please use the following verification code to complete your registration:
           </Text>
         </Row>
+
         <Row>
-          <Text>{otp}</Text> 
+          <Text style={{
+            fontSize: '22px',
+            fontWeight: 'bold',
+            color: '#007bff',
+            textAlign: 'center',
+            letterSpacing: '2px',
+          }}>
+            {otp}
+          </Text>
         </Row>
+
         <Row>
-          <Text>
+          <a href={`https://yourwebsite.com/verify/${username}`}
+            style={{
+              display: "block",
+              width: "200px",
+              margin: "20px auto",
+              padding: "10px 20px",
+              backgroundColor: "#007bff",
+              color: "#ffffff",
+              textDecoration: "none",
+              borderRadius: "5px",
+              fontWeight: "bold",
+              textAlign: "center",
+            }}>
+            Verify Now
+          </a>
+        </Row>
+
+        <Row>
+          <Text style={{ fontSize: '14px', color: '#777', textAlign: 'center' }}>
             If you did not request this code, please ignore this email.
           </Text>
         </Row>
-        {/* <Row>
-          <Button
-            href={`http://localhost:3000/verify/${username}`}
-            style={{ color: '#61dafb' }}
-          >
-            Verify here
-          </Button>
-        </Row> */}
       </Section>
     </Html>
   );
