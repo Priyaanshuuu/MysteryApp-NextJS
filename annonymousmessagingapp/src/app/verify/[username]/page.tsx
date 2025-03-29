@@ -13,11 +13,13 @@ import { Form } from '@/components/ui/form';
 import * as z from 'zod';
 import { useForm } from 'react-hook-form';
 import { motion } from 'framer-motion';
+import {  useSession } from 'next-auth/react';
 
 function VerifyAccount() {
   const router = useRouter();
   const params = useParams<{ username: string }>();
   const { toast } = useToast();
+  const { update } = useSession(); // session update karne ke liye
 
   const form = useForm<z.infer<typeof verifySchema>>({
     resolver: zodResolver(verifySchema),
@@ -35,9 +37,13 @@ function VerifyAccount() {
         description: response.data.message,
       });
 
-      router.replace('/sign-in');
+      // 🔹 Session ko update karo verification ke baad
+      await update();
+
+      // ✅ Directly Dashboard pe redirect karo
+      router.replace('/dashboard');
     } catch (error) {
-      console.error('Error in signup of user', error);
+      console.error('Error in verifying user', error);
       const axiosError = error as AxiosError<ApiResponse>;
 
       toast({
