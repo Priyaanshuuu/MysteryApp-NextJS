@@ -15,24 +15,15 @@ export default function Dashboard() {
 
   // Function to simulate receiving a message
   const receiveMessage = (msg) => {
-    if (acceptMessages) {
+    if (acceptMessages && msg.trim()) {
       setInbox((prev) => [...prev, msg]);
+      setMessage("");
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600 p-6">
+    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600 p-6 w-full">
       <h1 className="text-4xl font-bold text-white mb-6">Dashboard</h1>
-      
-      {/* Toggle Accept Messages */}
-      <div className="flex items-center gap-3 mb-4">
-        <button
-          className={`px-4 py-2 rounded-lg text-white font-semibold ${acceptMessages ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
-          onClick={() => setAcceptMessages(!acceptMessages)}
-        >
-          {acceptMessages ? "Stop Accepting Messages" : "Accept Messages"}
-        </button>
-      </div>
       
       {/* Chat Box */}
       <div className="w-full max-w-lg bg-white shadow-lg rounded-2xl p-4">
@@ -70,12 +61,12 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Inbox Notifications */}
-      <div className="w-full max-w-lg bg-white shadow-lg rounded-2xl p-4 mt-6">
+      {/* Inbox Notifications - Bottom Right */}
+      <div className="absolute bottom-6 right-6 w-80 bg-white shadow-lg rounded-2xl p-4">
         <h2 className="text-lg font-semibold text-gray-700 flex items-center">
           <Bell className="mr-2 h-5 w-5 text-indigo-500" /> Inbox
         </h2>
-        <div className="mt-3 space-y-2">
+        <div className="mt-3 space-y-2 max-h-40 overflow-auto">
           {inbox.length > 0 ? (
             inbox.map((msg, index) => (
               <div 
@@ -96,6 +87,14 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Toggle Accept Messages - Bottom Left */}
+      <button
+        className={`absolute bottom-6 left-6 px-4 py-2 rounded-lg text-white font-semibold ${acceptMessages ? 'bg-green-500 hover:bg-green-600' : 'bg-red-500 hover:bg-red-600'}`}
+        onClick={() => setAcceptMessages(!acceptMessages)}
+      >
+        {acceptMessages ? "Stop Accepting Messages" : "Accept Messages"}
+      </button>
     </div>
   );
 }
