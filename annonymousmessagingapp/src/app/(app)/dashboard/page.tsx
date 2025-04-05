@@ -2,109 +2,101 @@
 
 import { useEffect, useState } from "react";
 import { Send, Bot, Bell, XCircle, MessageSquare, Loader2 } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "react-hot-toast";
 
-interface Message {
-  content: string;
-  createdAt: Date;
-}
+let debounceTimeout: NodeJS.Timeout;
 
 export default function Dashboard() {
+  const [recipient, setRecipient] = useState<string>("");
   const [message, setMessage] = useState<string>("");
-  const [suggestions] = useState<string[]>([
+  const [loading, setLoading] = useState<boolean>(false);
+  const [suggestions, setSuggestions] = useState<string[]>([
     "Hello! How can I help you?",
     "What's on your mind?",
     "Need assistance with something?",
   ]);
-  const [inbox, setInbox] = useState<Message[]>([]);
+  const [inbox, setInbox] = useState<string[]>([]);
   const [sentMessages, setSentMessages] = useState<string[]>([]);
   const [acceptMessages, setAcceptMessages] = useState<boolean>(true);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [userSuggestions, setUserSuggestions] = useState<string[]>([]);
+  const [showUserSuggestions, setShowUserSuggestions] = useState<boolean>(false);
 
-  const sendMessage = async (msg: string) => {
-    if (!msg.trim()) return toast.error("Message cannot be empty!");
+  const handleSend = async () => {
+    if (!recipient.trim()) {
+      toast.error("Please enter recipient username");
+      return;
+    }
+
+    if (!message.trim()) {
+      toast.error("Message cannot be empty");
+      return;
+    }
 
     setLoading(true);
-    setMessage("");
 
     try {
       const res = await fetch("/api/send-message", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username: "your-username", content: msg })
+        body: JSON.stringify({
+          username: recipient,
+          content: message,
+        }),
       });
 
+      if (!res.ok) throw new Error("Failed to send message");
+
       const data = await res.json();
-      if (res.ok && data.success) {
-        setSentMessages((prev) => [...prev, msg]);
-        receiveMessage({ content: msg, createdAt: new Date() });
-        toast.success("Message sent!");
+
+      if (data.success) {
+        toast.success("Message sent successfully");
+        setSentMessages((prev) => [...prev, message]);
+        setMessage("");
+        setRecipient("");
       } else {
-        toast.error(data.message || "Failed to send message.");
+        toast.error(data.message || "Something went wrong");
       }
-    } catch (err) {
-      console.error("Sending failed:", err);
-      toast.error("An error occurred while sending.");
+    } catch (error) {
+      toast.error("Error sending message");
     } finally {
       setLoading(false);
     }
   };
 
-  const receiveMessage = (msg: Message) => {
+  const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setRecipient(value);
+    setShowUserSuggestions(true);
+
+    clearTimeout(debounceTimeout);
+    debounceTimeout = setTimeout(async () => {
+      if (value.trim()) {
+        try {
+          const res = await fetch(`/api/usernames?search=${value}`);
+          const data = await res.json();
+          setUserSuggestions(data.usernames || []);
+        } catch (err) {
+          setUserSuggestions([]);
+        }
+      } else {
+        setUserSuggestions([]);
+      }
+    }, 300); // Debounce
+  };
+
+  const receiveMessage = (msg: string) => {
     if (acceptMessages) {
       setInbox((prev) => [...prev, msg]);
     }
   };
 
-  const toggleAcceptMessages = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/accept-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ acceptMessages: !acceptMessages })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setAcceptMessages((prev) => !prev);
-        toast.success(`You ${!acceptMessages ? "started" : "stopped"} accepting messages.`);
-      } else {
-        toast.error("Failed to update status.");
-      }
-    } catch (error) {
-      toast.error("Error updating acceptance status.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAcceptStatus = async () => {
-    try {
-      const res = await fetch("/api/accept-message", { method: "GET" });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setAcceptMessages(data.isAcceptingMessages);
-      }
-    } catch (error) {
-      console.error("Error fetching status:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchAcceptStatus();
-  }, []);
-
   return (
     <div className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600 p-6 w-full">
       <h1 className="text-4xl font-bold text-white mb-6">Dashboard</h1>
 
-      {/* Sent Messages Panel */}
+      {/* Sent Messages */}
       <div className="absolute top-6 right-6 w-80 bg-white shadow-lg rounded-2xl p-4">
         <h2 className="text-lg font-semibold text-gray-700 flex items-center">
           <MessageSquare className="mr-2 h-5 w-5 text-indigo-500" /> Sent Messages
@@ -123,21 +115,57 @@ export default function Dashboard() {
       </div>
 
       {/* Chat Box */}
-      <div className="w-full max-w-lg bg-white shadow-lg rounded-2xl p-4 flex flex-col">
+      <div className="w-full max-w-lg bg-white shadow-lg rounded-2xl p-4 flex flex-col relative">
         <h2 className="text-lg font-semibold text-gray-700 mb-3">Chat Box</h2>
+
+        <input
+          type="text"
+          placeholder="Enter recipient's username"
+          value={recipient}
+          onChange={handleRecipientChange}
+          onFocus={() => setShowUserSuggestions(true)}
+          className="w-full p-2 border border-gray-300 rounded-lg mb-1"
+        />
+
+        {showUserSuggestions && userSuggestions.length > 0 && (
+          <div className="absolute top-24 bg-white shadow-md border w-full max-w-lg rounded-lg z-50 max-h-40 overflow-auto">
+            {userSuggestions.map((name, i) => (
+              <div
+                key={i}
+                className="p-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => {
+                  setRecipient(name);
+                  setShowUserSuggestions(false);
+                }}
+              >
+                {name}
+              </div>
+            ))}
+          </div>
+        )}
+
         <textarea
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-indigo-400"
+          className="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-indigo-400 mt-2"
           rows={4}
           placeholder="Type your message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
+
         <button
-          className="mt-3 w-full bg-indigo-500 text-white py-2 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition disabled:opacity-50"
-          onClick={() => sendMessage(message)}
+          className="mt-3 w-full bg-indigo-500 text-white py-2 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition"
+          onClick={handleSend}
           disabled={loading}
         >
-          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <>Send <Send className="ml-2 h-5 w-5" /></>}
+          {loading ? (
+            <>
+              Sending <Loader2 className="ml-2 h-5 w-5 animate-spin" />
+            </>
+          ) : (
+            <>
+              Send <Send className="ml-2 h-5 w-5" />
+            </>
+          )}
         </button>
       </div>
 
@@ -171,10 +199,10 @@ export default function Dashboard() {
                 key={index}
                 className="flex justify-between items-center p-2 border border-gray-300 rounded-lg bg-gray-100"
               >
-                <span>{msg.content}</span>
+                <span>{msg}</span>
                 <button
                   className="text-red-500 hover:text-red-700"
-                  onClick={() => setInbox((prev) => prev.filter((_, i) => i !== index))}
+                  onClick={() => setInbox(inbox.filter((_, i) => i !== index))}
                 >
                   <XCircle className="w-5 h-5" />
                 </button>
@@ -188,15 +216,15 @@ export default function Dashboard() {
 
       {/* Accept Toggle */}
       <button
-        className="absolute bottom-6 left-6 px-4 py-2 rounded-lg text-white font-semibold bg-green-500 hover:bg-green-600 disabled:opacity-50"
-        onClick={toggleAcceptMessages}
-        disabled={loading}
+        className="absolute bottom-6 left-6 px-4 py-2 rounded-lg text-white font-semibold bg-green-500 hover:bg-green-600"
+        onClick={() => {
+          setAcceptMessages(!acceptMessages);
+          toast.success(
+            acceptMessages ? "Stopped accepting messages" : "Now accepting messages"
+          );
+        }}
       >
-        {loading ? (
-          <span className="flex items-center">
-            <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Updating...
-          </span>
-        ) : acceptMessages ? "Stop Accepting Messages" : "Accept Messages"}
+        {acceptMessages ? "Stop Accepting Messages" : "Accept Messages"}
       </button>
     </div>
   );
