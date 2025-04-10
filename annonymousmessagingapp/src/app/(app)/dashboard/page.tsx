@@ -1,231 +1,188 @@
-'use client';
+'use client'
 
-import { useEffect, useState } from "react";
-import { Send, Bot, Bell, XCircle, MessageSquare, Loader2 } from "lucide-react";
-import { toast } from "react-hot-toast";
-
-let debounceTimeout: NodeJS.Timeout;
+import { useState, useEffect } from 'react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { useToast } from '@/components/ui/use-toast'
+import { MessageSquare } from 'lucide-react'
 
 export default function Dashboard() {
-  const [recipient, setRecipient] = useState<string>("");
-  const [message, setMessage] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
-  const [suggestions, setSuggestions] = useState<string[]>([
-    "Hello! How can I help you?",
-    "What's on your mind?",
-    "Need assistance with something?",
-  ]);
-  const [inbox, setInbox] = useState<string[]>([]);
-  const [sentMessages, setSentMessages] = useState<string[]>([]);
-  const [acceptMessages, setAcceptMessages] = useState<boolean>(true);
-  const [userSuggestions, setUserSuggestions] = useState<string[]>([]);
-  const [showUserSuggestions, setShowUserSuggestions] = useState<boolean>(false);
+  const [recipient, setRecipient] = useState('')
+  const [message, setMessage] = useState('')
+  const [sentMessages, setSentMessages] = useState<string[]>([])
+  const [inboxMessages, setInboxMessages] = useState<string[]>([])
+  const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
+  const [acceptingMessages, setAcceptingMessages] = useState(true)
+  const [userSuggestions, setUserSuggestions] = useState<string[]>([])
+  const [showUserSuggestions, setShowUserSuggestions] = useState(false)
 
-  const handleSend = async () => {
-    if (!recipient.trim()) {
-      toast.error("Please enter recipient username");
-      return;
+  const { toast } = useToast()
+
+  const handleSendMessage = async () => {
+    if (!recipient || !message) {
+      toast({ title: 'Error', description: 'Recipient and message are required', variant: 'destructive' })
+      return
     }
 
-    if (!message.trim()) {
-      toast.error("Message cannot be empty");
-      return;
-    }
+    const res = await fetch('/api/send-message', {
+      method: 'POST',
+      body: JSON.stringify({ username: recipient, content: message }),
+    })
 
-    setLoading(true);
+    if (res.ok) {
+      toast({ title: 'Message sent successfully' })
+      setSentMessages([...sentMessages, message])
+      setMessage('')
+    } else {
+      toast({ title: 'Failed to send message', variant: 'destructive' })
+    }
+  }
+
+  const toggleAcceptingMessages = async () => {
+    const res = await fetch('/api/accept-message', { method: 'POST' })
+    if (res.ok) {
+      const data = await res.json()
+      setAcceptingMessages(data.acceptingMessages)
+    }
+  }
+
+  const fetchAcceptingStatus = async () => {
+    const res = await fetch('/api/accept-message')
+    if (res.ok) {
+      const data = await res.json()
+      setAcceptingMessages(data.acceptingMessages)
+    }
+  }
+
+  const handleRecipientChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setRecipient(value)
+
+    if (value.trim() === '') {
+      setUserSuggestions([])
+      setShowUserSuggestions(false)
+      return
+    }
 
     try {
-      const res = await fetch("/api/send-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: recipient,
-          content: message,
-        }),
-      });
-
-      if (!res.ok) throw new Error("Failed to send message");
-
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success("Message sent successfully");
-        setSentMessages((prev) => [...prev, message]);
-        setMessage("");
-        setRecipient("");
-      } else {
-        toast.error(data.message || "Something went wrong");
-      }
-    } catch (error) {
-      toast.error("Error sending message");
-    } finally {
-      setLoading(false);
+      const res = await fetch(`/api/usernames?q=${value}`)
+      const data = await res.json()
+      setUserSuggestions(data.usernames)
+      setShowUserSuggestions(true)
+    } catch (err) {
+      console.error('Error fetching usernames:', err)
     }
-  };
+  }
 
-  const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setRecipient(value);
-    setShowUserSuggestions(true);
-
-    clearTimeout(debounceTimeout);
-    debounceTimeout = setTimeout(async () => {
-      if (value.trim()) {
-        try {
-          const res = await fetch(`/api/usernames?search=${value}`);
-          const data = await res.json();
-          setUserSuggestions(data.usernames || []);
-        } catch (err) {
-          setUserSuggestions([]);
-        }
-      } else {
-        setUserSuggestions([]);
-      }
-    }, 300); // Debounce
-  };
-
-  const receiveMessage = (msg: string) => {
-    if (acceptMessages) {
-      setInbox((prev) => [...prev, msg]);
-    }
-  };
+  useEffect(() => {
+    fetchAcceptingStatus()
+  }, [])
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-purple-500 to-indigo-600 p-6 w-full">
-      <h1 className="text-4xl font-bold text-white mb-6">Dashboard</h1>
+    <div className="min-h-screen bg-[#e3f6f5] p-6 flex flex-col items-center gap-6">
+      <div className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-lg relative">
+        <h1 className="text-2xl font-bold mb-4 text-[#272343]">Dashboard</h1>
 
-      {/* Sent Messages */}
-      <div className="absolute top-6 right-6 w-80 bg-white shadow-lg rounded-2xl p-4">
-        <h2 className="text-lg font-semibold text-gray-700 flex items-center">
-          <MessageSquare className="mr-2 h-5 w-5 text-indigo-500" /> Sent Messages
-        </h2>
-        <div className="mt-3 space-y-2 max-h-40 overflow-auto">
-          {sentMessages.length > 0 ? (
-            sentMessages.map((msg, index) => (
-              <div key={index} className="p-2 border border-gray-300 rounded-lg bg-gray-100">
-                {msg}
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500">No messages sent</p>
+        {/* Chat Box */}
+        <div className="space-y-4">
+          <Input
+            value={recipient}
+            onChange={handleRecipientChange}
+            placeholder="Recipient username"
+            className="border border-gray-300"
+          />
+          {showUserSuggestions && recipient.trim() && userSuggestions.length > 0 && (
+            <div className="absolute top-28 left-0 bg-white shadow-md border w-full max-w-lg rounded-lg z-50 max-h-40 overflow-auto">
+              {userSuggestions.map((name, i) => (
+                <div
+                  key={i}
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => {
+                    setRecipient(name)
+                    setShowUserSuggestions(false)
+                  }}
+                >
+                  {name}
+                </div>
+              ))}
+            </div>
           )}
+          <Input
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Write your message..."
+            className="border border-gray-300"
+          />
+          <Button onClick={handleSendMessage} className="bg-[#bae8e8] text-[#272343]">
+            Send
+          </Button>
         </div>
       </div>
 
-      {/* Chat Box */}
-      <div className="w-full max-w-lg bg-white shadow-lg rounded-2xl p-4 flex flex-col relative">
-        <h2 className="text-lg font-semibold text-gray-700 mb-3">Chat Box</h2>
+      {/* Sent Messages */}
+      <div className="bg-white shadow-lg rounded-2xl p-4 w-full max-w-lg">
+        <h2 className="text-lg font-semibold mb-2 text-[#272343]">Sent Messages</h2>
+        <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+          {sentMessages.map((msg, i) => (
+            <li key={i}>{msg}</li>
+          ))}
+        </ul>
+      </div>
 
-        <input
-          type="text"
-          placeholder="Enter recipient's username"
-          value={recipient}
-          onChange={handleRecipientChange}
-          onFocus={() => setShowUserSuggestions(true)}
-          className="w-full p-2 border border-gray-300 rounded-lg mb-1"
-        />
+      {/* Inbox */}
+      <div className="bg-white shadow-lg rounded-2xl p-4 w-full max-w-lg">
+        <h2 className="text-lg font-semibold mb-2 text-[#272343]">Inbox</h2>
+        <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+          {inboxMessages.map((msg, i) => (
+            <li key={i}>{msg}</li>
+          ))}
+        </ul>
+      </div>
 
-        {showUserSuggestions && userSuggestions.length > 0 && (
-          <div className="absolute top-24 bg-white shadow-md border w-full max-w-lg rounded-lg z-50 max-h-40 overflow-auto">
-            {userSuggestions.map((name, i) => (
+      {/* AI Suggestions */}
+      <div className="bg-white shadow-lg rounded-2xl p-4 w-full max-w-lg">
+        <h2 className="text-lg font-semibold text-[#272343] flex items-center">
+          <MessageSquare className="mr-2 h-5 w-5 text-indigo-500" /> AI Suggestions
+        </h2>
+        <ul className="mt-2 list-disc list-inside space-y-1 text-sm text-gray-700">
+          {aiSuggestions.map((s, i) => (
+            <li key={i}>{s}</li>
+          ))}
+        </ul>
+      </div>
+
+      {/* User Suggestions */}
+      {userSuggestions.length > 0 && (
+        <div className="w-full max-w-lg bg-white shadow-lg rounded-2xl p-4">
+          <h2 className="text-lg font-semibold text-gray-700 flex items-center">
+            <MessageSquare className="mr-2 h-5 w-5 text-indigo-500" /> User Suggestions
+          </h2>
+          <div className="mt-3 space-y-2 max-h-40 overflow-auto">
+            {userSuggestions.map((name, index) => (
               <div
-                key={i}
-                className="p-2 hover:bg-gray-100 cursor-pointer"
+                key={index}
+                className="p-2 border border-gray-300 rounded-lg bg-gray-100 cursor-pointer hover:bg-gray-200 transition"
                 onClick={() => {
-                  setRecipient(name);
-                  setShowUserSuggestions(false);
+                  setRecipient(name)
+                  setShowUserSuggestions(false)
+                  toast({ title: `Selected ${name}` })
                 }}
               >
                 {name}
               </div>
             ))}
           </div>
-        )}
-
-        <textarea
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring focus:ring-indigo-400 mt-2"
-          rows={4}
-          placeholder="Type your message..."
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-        />
-
-        <button
-          className="mt-3 w-full bg-indigo-500 text-white py-2 rounded-lg flex items-center justify-center hover:bg-indigo-600 transition"
-          onClick={handleSend}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              Sending <Loader2 className="ml-2 h-5 w-5 animate-spin" />
-            </>
-          ) : (
-            <>
-              Send <Send className="ml-2 h-5 w-5" />
-            </>
-          )}
-        </button>
-      </div>
-
-      {/* AI Suggestions */}
-      <div className="w-full max-w-lg bg-white shadow-lg rounded-2xl p-4 mt-6">
-        <h2 className="text-lg font-semibold text-gray-700 flex items-center">
-          <Bot className="mr-2 h-5 w-5 text-indigo-500" /> AI Suggestions
-        </h2>
-        <div className="mt-3 space-y-2">
-          {suggestions.map((suggestion, index) => (
-            <button
-              key={index}
-              className="w-full text-left p-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition"
-              onClick={() => setMessage(suggestion)}
-            >
-              {suggestion}
-            </button>
-          ))}
         </div>
-      </div>
+      )}
 
-      {/* Inbox */}
-      <div className="absolute bottom-6 right-6 w-80 bg-white shadow-lg rounded-2xl p-4">
-        <h2 className="text-lg font-semibold text-gray-700 flex items-center">
-          <Bell className="mr-2 h-5 w-5 text-indigo-500" /> Inbox
-        </h2>
-        <div className="mt-3 space-y-2 max-h-40 overflow-auto">
-          {inbox.length > 0 ? (
-            inbox.map((msg, index) => (
-              <div
-                key={index}
-                className="flex justify-between items-center p-2 border border-gray-300 rounded-lg bg-gray-100"
-              >
-                <span>{msg}</span>
-                <button
-                  className="text-red-500 hover:text-red-700"
-                  onClick={() => setInbox(inbox.filter((_, i) => i !== index))}
-                >
-                  <XCircle className="w-5 h-5" />
-                </button>
-              </div>
-            ))
-          ) : (
-            <p className="text-gray-500">No new messages</p>
-          )}
-        </div>
-      </div>
-
-      {/* Accept Toggle */}
-      <button
-        className="absolute bottom-6 left-6 px-4 py-2 rounded-lg text-white font-semibold bg-green-500 hover:bg-green-600"
-        onClick={() => {
-          setAcceptMessages(!acceptMessages);
-          toast.success(
-            acceptMessages ? "Stopped accepting messages" : "Now accepting messages"
-          );
-        }}
+      {/* Toggle Accept/Stop */}
+      <Button
+        onClick={toggleAcceptingMessages}
+        variant="outline"
+        className="mt-4 bg-white border border-gray-300 text-[#272343]"
       >
-        {acceptMessages ? "Stop Accepting Messages" : "Accept Messages"}
-      </button>
+        {acceptingMessages ? 'Stop Accepting Messages' : 'Accept Messages'}
+      </Button>
     </div>
-  );
+  )
 }
