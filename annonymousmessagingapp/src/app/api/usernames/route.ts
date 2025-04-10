@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect"; // Make sure this is correct
-import User from "@/models/User"; // Adjust path if needed
+import User from "@/model/User.model"; // Adjust path if needed
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
