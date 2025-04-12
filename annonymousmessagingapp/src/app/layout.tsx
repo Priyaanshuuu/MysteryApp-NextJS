@@ -1,11 +1,10 @@
 'use client';
 
-
-
 import localFont from "next/font/local";
 import "./globals.css";
 import AuthProvider from "@/context/AuthProvider";
-import { Toaster } from "@/components/ui/toaster";
+import { ToastProvider } from "@/components/ui/toast"; // Ensure this is imported from the correct path
+import { Toaster } from "@/components/ui/toaster"; // This is for displaying the toast notifications
 //import Navbar from '../components/Navbar'
 //import { usePathname } from "next/navigation";
 
@@ -21,26 +20,21 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
-}>)
- {
-  //const pathname = usePathname();
+}>) {
   return (
     <html lang="en">
-      <AuthProvider>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        
-        {children}
-        <Toaster />
-      </body>
-      </AuthProvider>
+      <ToastProvider> {/* Wrap everything in ToastProvider */}
+        <AuthProvider>
+          <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+            {children}
+            <Toaster /> {/* This will show your toast notifications */}
+          </body>
+        </AuthProvider>
+      </ToastProvider>
     </html>
   );
 }
