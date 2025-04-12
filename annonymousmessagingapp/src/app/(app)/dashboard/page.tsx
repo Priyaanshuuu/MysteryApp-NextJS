@@ -24,7 +24,7 @@ export default function Dashboard() {
       return;
     }
 
-    const res = await fetch('/api/send-message', {
+    const res = await fetch('/api/send-messages', {
       method: 'POST',
       body: JSON.stringify({ username: recipient, content: message }),
     });
@@ -39,7 +39,7 @@ export default function Dashboard() {
   };
 
   const toggleAcceptingMessages = async () => {
-    const res = await fetch('/api/accept-message', { method: 'POST' });
+    const res = await fetch('/api/accept-messages', { method: 'POST' });
     if (res.ok) {
       const data = await res.json();
       setAcceptingMessages(data.acceptingMessages);
@@ -47,7 +47,7 @@ export default function Dashboard() {
   };
 
   const fetchAcceptingStatus = async () => {
-    const res = await fetch('/api/accept-message');
+    const res = await fetch('/api/accept-messages');
     if (res.ok) {
       const data = await res.json();
       setAcceptingMessages(data.acceptingMessages);
