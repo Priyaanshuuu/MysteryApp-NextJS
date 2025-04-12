@@ -1,6 +1,5 @@
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/model/User.model";
-import  message  from "@/model/User.model";
 
 export async function POST(request: Request) {
   await dbConnect();
@@ -34,14 +33,12 @@ export async function POST(request: Request) {
       );
     }
 
-    // Save the message to the recipient's message list
-    const newMessage = new message({
+    
+    user.messages.push({
       content,
       createdAt: new Date(),
-    });
+    } as any); 
 
-    // Push the message to the user's inbox (not the sender's inbox)
-    user.message.push(newMessage);
     await user.save();
 
     return Response.json(
