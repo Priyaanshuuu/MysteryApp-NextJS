@@ -1,53 +1,70 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Toast } from '@/components/ui/toast'; // ✅ you said this is available
-import { Toaster } from '@/components/ui/toaster'; // ✅ add this to render all toasts
-import { MessageSquare } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Toast } from "@/components/ui/toast";
+import { Toaster } from "@/components/ui/toaster";
+import { MessageSquare } from "lucide-react";
 
 export default function Dashboard() {
-  const [recipient, setRecipient] = useState('');
-  const [message, setMessage] = useState('');
+  const [recipient, setRecipient] = useState("");
+  const [message, setMessage] = useState("");
   const [sentMessages, setSentMessages] = useState<string[]>([]);
   const [inboxMessages, setInboxMessages] = useState<string[]>([]);
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([]);
   const [acceptingMessages, setAcceptingMessages] = useState(true);
   const [userSuggestions, setUserSuggestions] = useState<string[]>([]);
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
-  const [toastMsg, setToastMsg] = useState<{ title: string; type?: 'error' | 'success' } | null>(null);
+  const [toastMsg, setToastMsg] = useState<{
+    title: string;
+    type?: "error" | "success";
+  } | null>(null);
+
+  useEffect(() => {
+    fetchAcceptingStatus();
+    fetchInboxMessages();
+  }, []);
 
   const handleSendMessage = async () => {
     if (!recipient || !message) {
-      setToastMsg({ title: 'Recipient and message are required', type: 'error' });
+      setToastMsg({ title: "Recipient and message are required", type: "error" });
       return;
     }
 
-    const res = await fetch('/api/send-messages', {
-      method: 'POST',
+    const res = await fetch("/api/send-messages", {
+      method: "POST",
       body: JSON.stringify({ username: recipient, content: message }),
     });
 
     if (res.ok) {
-      setToastMsg({ title: 'Message sent successfully', type: 'success' });
+      setToastMsg({ title: "Message sent successfully", type: "success" });
       setSentMessages((prev) => [...prev, message]);
-      setMessage('');
+      setMessage("");
     } else {
-      setToastMsg({ title: 'Failed to send message', type: 'error' });
+      setToastMsg({ title: "Failed to send message", type: "error" });
     }
   };
 
-  const toggleAcceptingMessages = async () => {
-    const res = await fetch('/api/accept-messages', { method: 'POST' });
+  const fetchAcceptingStatus = async () => {
+    const res = await fetch("/api/accept-messages");
     if (res.ok) {
       const data = await res.json();
       setAcceptingMessages(data.acceptingMessages);
     }
   };
 
-  const fetchAcceptingStatus = async () => {
-    const res = await fetch('/api/accept-messages');
+  const fetchInboxMessages = async () => {
+    const res = await fetch("/api/get-messages");
+    if (res.ok) {
+      const data = await res.json();
+      const messages = data.messages.map((m: any) => m.content);
+      setInboxMessages(messages);
+    }
+  };
+
+  const toggleAcceptingMessages = async () => {
+    const res = await fetch("/api/accept-messages", { method: "POST" });
     if (res.ok) {
       const data = await res.json();
       setAcceptingMessages(data.acceptingMessages);
@@ -58,7 +75,7 @@ export default function Dashboard() {
     const value = e.target.value;
     setRecipient(value);
 
-    if (value.trim() === '') {
+    if (value.trim() === "") {
       setUserSuggestions([]);
       setShowUserSuggestions(false);
       return;
@@ -70,30 +87,24 @@ export default function Dashboard() {
       setUserSuggestions(data.usernames);
       setShowUserSuggestions(true);
     } catch (err) {
-      console.error('Error fetching usernames:', err);
+      console.error("Error fetching usernames:", err);
     }
   };
 
-  useEffect(() => {
-    fetchAcceptingStatus();
-  }, []);
-
   return (
     <div className="min-h-screen bg-[#e3f6f5] text-[#272343] p-6 flex flex-col items-center gap-6 relative">
-      {/* ✅ Render Toast if needed */}
       {toastMsg && (
         <div className="fixed top-4 right-4 z-50">
           <Toast
             title={toastMsg.title}
-            variant={toastMsg.type === 'error' ? 'destructive' : 'default'}
+            variant={toastMsg.type === "error" ? "destructive" : "default"}
           />
         </div>
       )}
 
-      {/* ✅ Render Toaster once */}
       <Toaster />
 
-      {/* Inbox - Top Right */}
+      {/* Inbox */}
       <div className="absolute top-6 right-6 bg-white shadow-lg rounded-2xl p-4 w-72">
         <h2 className="text-lg font-semibold mb-2">Inbox</h2>
         <ul className="text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
@@ -124,7 +135,7 @@ export default function Dashboard() {
                     onClick={() => {
                       setRecipient(name);
                       setShowUserSuggestions(false);
-                      setToastMsg({ title: `Selected ${name}`, type: 'success' });
+                      setToastMsg({ title: `Selected ${name}`, type: "success" });
                     }}
                   >
                     {name}
@@ -172,14 +183,14 @@ export default function Dashboard() {
         </ul>
       </div>
 
-      {/* Accept/Stop Button */}
+      {/* Toggle Accepting Messages */}
       <div className="absolute bottom-6 left-6">
         <Button
           onClick={toggleAcceptingMessages}
           variant="outline"
           className="bg-white border border-gray-300 text-[#272343]"
         >
-          {acceptingMessages ? 'Stop Accepting Messages' : 'Accept Messages'}
+          {acceptingMessages ? "Stop Accepting Messages" : "Accept Messages"}
         </Button>
       </div>
     </div>
