@@ -20,7 +20,7 @@ export default function Dashboard() {
     title: string;
     type?: "error" | "success";
   } | null>(null);
-  const [userPrompt, setUserPrompt] = useState(""); // State for user's prompt
+  const [userPrompt, setUserPrompt] = useState("");
 
   useEffect(() => {
     fetchAcceptingStatus();
@@ -51,7 +51,7 @@ export default function Dashboard() {
     const res = await fetch("/api/accept-messages");
     if (res.ok) {
       const data = await res.json();
-      setAcceptingMessages(data.acceptingMessages);
+      setAcceptingMessages(data.isAcceptingMessages);
     }
   };
 
@@ -65,10 +65,25 @@ export default function Dashboard() {
   };
 
   const toggleAcceptingMessages = async () => {
-    const res = await fetch("/api/accept-messages", { method: "POST" });
+    const newStatus = !acceptingMessages;
+
+    const res = await fetch("/api/accept-messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ acceptMessages: newStatus }),
+    });
+
     if (res.ok) {
       const data = await res.json();
-      setAcceptingMessages(data.acceptingMessages);
+      setAcceptingMessages(data.updatedUser.isAcceptingMessage);
+      setToastMsg({
+        title: `Now ${data.updatedUser.isAcceptingMessage ? "accepting" : "not accepting"} messages`,
+        type: "success",
+      });
+    } else {
+      setToastMsg({ title: "Failed to update message preference", type: "error" });
     }
   };
 
@@ -109,7 +124,7 @@ export default function Dashboard() {
 
     if (res.ok) {
       const data = await res.json();
-      setAiSuggestions(data.suggestions); // Assuming the response contains suggestions
+      setAiSuggestions(data.suggestions);
     } else {
       setToastMsg({ title: "Failed to fetch AI suggestions", type: "error" });
     }
@@ -201,7 +216,6 @@ export default function Dashboard() {
           <MessageSquare className="mr-2 h-5 w-5 text-indigo-500" /> AI Suggestions
         </h2>
 
-        {/* Input for custom prompt */}
         <Input
           value={userPrompt}
           onChange={handlePromptChange}
