@@ -12,18 +12,24 @@ export async function POST(request: Request) {
 
   if (!session || !session.user) {
     return Response.json(
-      {
-        success: false,
-        message: "Not Authenticated!!",
-      },
-      {
-        status: 401,
-      }
+      { success: false, message: "Not Authenticated!!" },
+      { status: 401 }
     );
   }
 
   const userId = user._id;
-  const { acceptMessages } = await request.json();
+
+  let acceptMessages: boolean | undefined;
+
+  try {
+    const body = await request.json();
+    acceptMessages = body.acceptMessages;
+  } catch (err) {
+    return Response.json(
+      { success: false, message: "Invalid or missing JSON body" },
+      { status: 400 }
+    );
+  }
 
   try {
     const updatedUser = await UserModel.findByIdAndUpdate(
@@ -38,9 +44,7 @@ export async function POST(request: Request) {
           success: false,
           message: "Failed to update user status to accept messages!",
         },
-        {
-          status: 500,
-        }
+        { status: 500 }
       );
     }
 
@@ -50,20 +54,16 @@ export async function POST(request: Request) {
         message: "Message acceptance status updated successfully",
         updatedUser,
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   } catch (error) {
-    console.log("Failed to update user status to accept messages", error);
+    console.error("Failed to update user status to accept messages", error);
     return Response.json(
       {
         success: false,
-        message: "Failed to update user status to accept messages",
+        message: "Internal Server Error",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
@@ -80,9 +80,7 @@ export async function GET(request: Request) {
         success: false,
         message: "Not Authenticated!!",
       },
-      {
-        status: 401,
-      }
+      { status: 401 }
     );
   }
 
@@ -96,9 +94,7 @@ export async function GET(request: Request) {
           success: false,
           message: "Failed to find the user!!",
         },
-        {
-          status: 404,
-        }
+        { status: 404 }
       );
     }
 
@@ -107,20 +103,16 @@ export async function GET(request: Request) {
         success: true,
         isAcceptingMessages: foundUser.isAcceptingMessage,
       },
-      {
-        status: 200,
-      }
+      { status: 200 }
     );
   } catch (error) {
-    console.log("Failed to find the user", error);
+    console.error("Failed to find the user", error);
     return Response.json(
       {
         success: false,
-        message: "Failed to find the user",
+        message: "Internal Server Error",
       },
-      {
-        status: 500,
-      }
+      { status: 500 }
     );
   }
 }
