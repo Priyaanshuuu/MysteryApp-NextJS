@@ -20,6 +20,7 @@ export default function Dashboard() {
     title: string;
     type?: "error" | "success";
   } | null>(null);
+  const [userPrompt, setUserPrompt] = useState(""); // State for user's prompt
 
   useEffect(() => {
     fetchAcceptingStatus();
@@ -88,6 +89,29 @@ export default function Dashboard() {
       setShowUserSuggestions(true);
     } catch (err) {
       console.error("Error fetching usernames:", err);
+    }
+  };
+
+  const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserPrompt(e.target.value);
+  };
+
+  const fetchAISuggestions = async () => {
+    if (!userPrompt) {
+      setToastMsg({ title: "Please enter a prompt for suggestions", type: "error" });
+      return;
+    }
+
+    const res = await fetch("/api/suggest-message", {
+      method: "POST",
+      body: JSON.stringify({ prompt: userPrompt }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      setAiSuggestions(data.suggestions); // Assuming the response contains suggestions
+    } else {
+      setToastMsg({ title: "Failed to fetch AI suggestions", type: "error" });
     }
   };
 
@@ -176,6 +200,22 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold flex items-center">
           <MessageSquare className="mr-2 h-5 w-5 text-indigo-500" /> AI Suggestions
         </h2>
+
+        {/* Input for custom prompt */}
+        <Input
+          value={userPrompt}
+          onChange={handlePromptChange}
+          placeholder="Enter your prompt for suggestions..."
+          className="border border-gray-300 mb-4"
+        />
+
+        <Button
+          onClick={fetchAISuggestions}
+          className="w-full text-white bg-gradient-to-r from-purple-500 to-indigo-600"
+        >
+          Get Suggestions
+        </Button>
+
         <ul className="mt-2 text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
           {aiSuggestions.map((s, i) => (
             <li key={i}>{s}</li>
