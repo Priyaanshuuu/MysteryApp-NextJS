@@ -6,113 +6,61 @@ import { User } from "next-auth";
 
 export async function POST(request: Request) {
   await dbConnect();
-
   const session = await getServerSession(authOptions);
   const user: User = session?.user as User;
 
   if (!session || !session.user) {
-    return Response.json(
-      { success: false, message: "Not Authenticated!!" },
-      { status: 401 }
-    );
-  }
-
-  const userId = user._id;
-
-  let acceptMessages: boolean | undefined;
-
-  try {
-    const body = await request.json();
-    acceptMessages = body.acceptMessages;
-  } catch (err) {
-    return Response.json(
-      { success: false, message: "Invalid or missing JSON body" },
-      { status: 400 }
-    );
+    return Response.json({ success: false, message: "Not Authenticated!!" }, { status: 401 });
   }
 
   try {
+    const { acceptMessages } = await request.json();
+
     const updatedUser = await UserModel.findByIdAndUpdate(
-      userId,
+      user._id,
       { isAcceptingMessage: acceptMessages },
       { new: true }
     );
 
     if (!updatedUser) {
       return Response.json(
-        {
-          success: false,
-          message: "Failed to update user status to accept messages!",
-        },
+        { success: false, message: "Failed to update message status." },
         { status: 500 }
       );
     }
 
-    return Response.json(
-      {
-        success: true,
-        message: "Message acceptance status updated successfully",
-        updatedUser,
-      },
-      { status: 200 }
-    );
+    return Response.json({
+      success: true,
+      message: "Message acceptance status updated successfully",
+      isAcceptingMessage: updatedUser.isAcceptingMessage,
+    });
   } catch (error) {
-    console.error("Failed to update user status to accept messages", error);
-    return Response.json(
-      {
-        success: false,
-        message: "Internal Server Error",
-      },
-      { status: 500 }
-    );
+    console.error("Update error:", error);
+    return Response.json({ success: false, message: "Internal Server Error" }, { status: 500 });
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   await dbConnect();
-
   const session = await getServerSession(authOptions);
   const user: User = session?.user as User;
 
   if (!session || !session.user) {
-    return Response.json(
-      {
-        success: false,
-        message: "Not Authenticated!!",
-      },
-      { status: 401 }
-    );
+    return Response.json({ success: false, message: "Not Authenticated!!" }, { status: 401 });
   }
 
-  const userId = user._id;
-
   try {
-    const foundUser = await UserModel.findById(userId);
+    const foundUser = await UserModel.findById(user._id);
     if (!foundUser) {
-      return Response.json(
-        {
-          success: false,
-          message: "Failed to find the user!!",
-        },
-        { status: 404 }
-      );
+      return Response.json({ success: false, message: "User not found" }, { status: 404 });
     }
 
-    return Response.json(
-      {
-        success: true,
-        isAcceptingMessages: foundUser.isAcceptingMessage,
-      },
-      { status: 200 }
-    );
+    return Response.json({
+      success: true,
+      isAcceptingMessages: foundUser.isAcceptingMessage,
+    });
   } catch (error) {
-    console.error("Failed to find the user", error);
-    return Response.json(
-      {
-        success: false,
-        message: "Internal Server Error",
-      },
-      { status: 500 }
-    );
+    console.error("GET error:", error);
+    return Response.json({ success: false, message: "Internal Server Error" }, { status: 500 });
   }
 }
