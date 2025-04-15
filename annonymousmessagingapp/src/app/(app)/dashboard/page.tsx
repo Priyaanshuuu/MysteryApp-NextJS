@@ -71,30 +71,36 @@ export default function Dashboard() {
 
   const toggleAcceptingMessages = async () => {
     const newStatus = !acceptingMessages;
-
-    try {
-      const res = await fetch("/api/accept-messages", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ acceptMessages: newStatus }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setAcceptingMessages(data.updatedUser.isAcceptingMessage);
-        showToast(
-          `Now ${data.updatedUser.isAcceptingMessage ? "accepting" : "not accepting"} messages`,
-          "success"
-        );
+  
+    const res = await fetch("/api/accept-messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ acceptMessages: newStatus }),
+    });
+  
+    if (res.ok) {
+      const data = await res.json();
+      console.log("Toggle API response:", data);
+  
+      const updatedStatus = data?.updatedUser?.isAcceptingMessages;
+  
+      if (typeof updatedStatus === "boolean") {
+        setAcceptingMessages(updatedStatus);
+        setToastMsg({
+          title: `Now ${updatedStatus ? "accepting" : "not accepting"} messages`,
+          type: "success",
+        });
       } else {
-        showToast("Failed to update message preference", "error");
+        setToastMsg({ title: "Unexpected response format", type: "error" });
       }
-    } catch (err) {
-      showToast("Error updating preference", "error");
+    } else {
+      setToastMsg({ title: "Failed to update message preference", type: "error" });
     }
   };
+  
+  
 
   const fetchInboxMessages = async () => {
     try {
