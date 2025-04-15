@@ -27,63 +27,84 @@ export default function Dashboard() {
     fetchInboxMessages();
   }, []);
 
+  const showToast = (title: string, type: "error" | "success" = "success") => {
+    setToastMsg({ title, type });
+    setTimeout(() => setToastMsg(null), 3000);
+  };
+
   const handleSendMessage = async () => {
     if (!recipient || !message) {
-      setToastMsg({ title: "Recipient and message are required", type: "error" });
-      return;
+      return showToast("Recipient and message are required", "error");
     }
 
-    const res = await fetch("/api/send-messages", {
-      method: "POST",
-      body: JSON.stringify({ username: recipient, content: message }),
-    });
+    try {
+      const res = await fetch("/api/send-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: recipient, content: message }),
+      });
 
-    if (res.ok) {
-      setToastMsg({ title: "Message sent successfully", type: "success" });
-      setSentMessages((prev) => [...prev, message]);
-      setMessage("");
-    } else {
-      setToastMsg({ title: "Failed to send message", type: "error" });
+      if (res.ok) {
+        setSentMessages((prev) => [...prev, message]);
+        setMessage("");
+        showToast("Message sent successfully", "success");
+      } else {
+        const error = await res.json();
+        showToast(error.message || "Failed to send message", "error");
+      }
+    } catch (error) {
+      showToast("Something went wrong", "error");
     }
   };
 
   const fetchAcceptingStatus = async () => {
-    const res = await fetch("/api/accept-messages");
-    if (res.ok) {
-      const data = await res.json();
-      setAcceptingMessages(data.isAcceptingMessages);
-    }
-  };
-
-  const fetchInboxMessages = async () => {
-    const res = await fetch("/api/get-messages");
-    if (res.ok) {
-      const data = await res.json();
-      const messages = data.messages.map((m: any) => m.content);
-      setInboxMessages(messages);
+    try {
+      const res = await fetch("/api/accept-messages");
+      if (res.ok) {
+        const data = await res.json();
+        setAcceptingMessages(data.isAcceptingMessage);
+      }
+    } catch (error) {
+      console.error("Error fetching accepting status", error);
     }
   };
 
   const toggleAcceptingMessages = async () => {
     const newStatus = !acceptingMessages;
 
-    const res = await fetch("/api/accept-messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ acceptMessages: newStatus }),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      setAcceptingMessages(data.updatedUser.isAcceptingMessage);
-      setToastMsg({
-        title: `Now ${data.updatedUser.isAcceptingMessage ? "accepting" : "not accepting"} messages`,
-        type: "success",
+    try {
+      const res = await fetch("/api/accept-messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ acceptMessages: newStatus }),
       });
-    } else {
-      setToastMsg({ title: "Failed to update message preference", type: "error" });
+
+      if (res.ok) {
+        const data = await res.json();
+        setAcceptingMessages(data.updatedUser.isAcceptingMessage);
+        showToast(
+          `Now ${data.updatedUser.isAcceptingMessage ? "accepting" : "not accepting"} messages`,
+          "success"
+        );
+      } else {
+        showToast("Failed to update message preference", "error");
+      }
+    } catch (err) {
+      showToast("Error updating preference", "error");
+    }
+  };
+
+  const fetchInboxMessages = async () => {
+    try {
+      const res = await fetch("/api/get-messages");
+      if (res.ok) {
+        const data = await res.json();
+        setInboxMessages(data.messages.map((m: any) => m.content));
+      }
+    } catch (error) {
+      console.error("Error fetching inbox messages", error);
     }
   };
 
@@ -91,7 +112,7 @@ export default function Dashboard() {
     const value = e.target.value;
     setRecipient(value);
 
-    if (value.trim() === "") {
+    if (!value.trim()) {
       setUserSuggestions([]);
       setShowUserSuggestions(false);
       return;
@@ -99,34 +120,39 @@ export default function Dashboard() {
 
     try {
       const res = await fetch(`/api/usernames?q=${value}`);
-      const data = await res.json();
-      setUserSuggestions(data.usernames);
-      setShowUserSuggestions(true);
-    } catch (err) {
-      console.error("Error fetching usernames:", err);
+      if (res.ok) {
+        const data = await res.json();
+        setUserSuggestions(data.usernames);
+        setShowUserSuggestions(true);
+      }
+    } catch (error) {
+      console.error("Error fetching usernames:", error);
     }
-  };
-
-  const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserPrompt(e.target.value);
   };
 
   const fetchAISuggestions = async () => {
     if (!userPrompt) {
-      setToastMsg({ title: "Please enter a prompt for suggestions", type: "error" });
-      return;
+      return showToast("Please enter a prompt for suggestions", "error");
     }
 
-    const res = await fetch("/api/suggest-message", {
-      method: "POST",
-      body: JSON.stringify({ prompt: userPrompt }),
-    });
+    try {
+      const res = await fetch("/api/suggest-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: userPrompt }),
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      setAiSuggestions(data.suggestions);
-    } else {
-      setToastMsg({ title: "Failed to fetch AI suggestions", type: "error" });
+      if (res.ok) {
+        const data = await res.json();
+        setAiSuggestions(data.suggestions || []);
+        if (!data.suggestions?.length) {
+          showToast("No suggestions found", "error");
+        }
+      } else {
+        showToast("Failed to fetch AI suggestions", "error");
+      }
+    } catch (error) {
+      showToast("Something went wrong", "error");
     }
   };
 
@@ -140,23 +166,23 @@ export default function Dashboard() {
           />
         </div>
       )}
-
       <Toaster />
 
       {/* Inbox */}
       <div className="absolute top-6 right-6 bg-white shadow-lg rounded-2xl p-4 w-72">
         <h2 className="text-lg font-semibold mb-2">Inbox</h2>
         <ul className="text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
-          {inboxMessages.map((msg, i) => (
-            <li key={i}>{msg}</li>
-          ))}
+          {inboxMessages.length > 0 ? (
+            inboxMessages.map((msg, i) => <li key={i}>{msg}</li>)
+          ) : (
+            <li>No messages yet</li>
+          )}
         </ul>
       </div>
 
       {/* Chat Box */}
       <div className="bg-white shadow-lg rounded-2xl p-6 w-full max-w-lg relative">
         <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-
         <div className="space-y-4 relative">
           <Input
             value={recipient}
@@ -174,7 +200,7 @@ export default function Dashboard() {
                     onClick={() => {
                       setRecipient(name);
                       setShowUserSuggestions(false);
-                      setToastMsg({ title: `Selected ${name}`, type: "success" });
+                      showToast(`Selected ${name}`, "success");
                     }}
                   >
                     {name}
@@ -190,7 +216,6 @@ export default function Dashboard() {
             placeholder="Write your message..."
             className="border border-gray-300"
           />
-
           <Button
             onClick={handleSendMessage}
             className="w-full text-white bg-gradient-to-r from-purple-500 to-indigo-600"
@@ -204,9 +229,11 @@ export default function Dashboard() {
       <div className="bg-white shadow-lg rounded-2xl p-4 w-full max-w-lg">
         <h2 className="text-lg font-semibold mb-2">Sent Messages</h2>
         <ul className="text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
-          {sentMessages.map((msg, i) => (
-            <li key={i}>{msg}</li>
-          ))}
+          {sentMessages.length > 0 ? (
+            sentMessages.map((msg, i) => <li key={i}>{msg}</li>)
+          ) : (
+            <li>No sent messages</li>
+          )}
         </ul>
       </div>
 
@@ -218,7 +245,7 @@ export default function Dashboard() {
 
         <Input
           value={userPrompt}
-          onChange={handlePromptChange}
+          onChange={(e) => setUserPrompt(e.target.value)}
           placeholder="Enter your prompt for suggestions..."
           className="border border-gray-300 mb-4"
         />
