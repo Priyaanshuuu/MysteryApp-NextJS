@@ -158,19 +158,17 @@ export default function Dashboard() {
 
   const deleteMessage = async (messageToDelete: string, isInbox: boolean) => {
     try {
-      const res = await fetch(`/api/delete-message/${messageToDelete}`, {
-        method: "DELETE", 
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isInbox }),
+      const res = await fetch(`/api/delete-message/${messageToDelete}?isInbox=${isInbox}`, {
+        method: "DELETE",
       });
-
+  
       const data = await res.json();
-
+  
       if (res.ok) {
         if (isInbox) {
-          setInboxMessages(inboxMessages.filter((msg) => msg !== messageToDelete));
+          setInboxMessages(inboxMessages.filter((msg) => msg._id !== messageToDelete));
         } else {
-          setSentMessages(sentMessages.filter((msg) => msg !== messageToDelete));
+          setSentMessages(sentMessages.filter((msg) => msg._id !== messageToDelete));
         }
         showToast("Message deleted successfully");
       } else {
@@ -180,6 +178,8 @@ export default function Dashboard() {
       showToast("Error deleting message", "error");
     }
   };
+  
+  
 
   return (
     <div className="min-h-screen bg-[#e3f6f5] text-[#272343] p-6 flex flex-col items-center gap-6 relative">
