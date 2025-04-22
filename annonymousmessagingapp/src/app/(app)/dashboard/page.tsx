@@ -156,11 +156,30 @@ export default function Dashboard() {
     }
   };
 
-  const deleteMessage = (messageToDelete: string, isInbox: boolean) => {
-    if (isInbox) {
-      setInboxMessages(inboxMessages.filter(msg => msg !== messageToDelete));
-    } else {
-      setSentMessages(sentMessages.filter(msg => msg !== messageToDelete));
+  const deleteMessage = async (messageToDelete: string, isInbox: boolean) => {
+    try {
+      // Make API call to delete the message from both the sender and recipient
+      const res = await fetch("/api/delete-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: messageToDelete, isInbox, sender: "currentUsername" }), // Pass the current user information to delete properly
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Remove message locally based on whether it's in inbox or sent
+        if (isInbox) {
+          setInboxMessages(inboxMessages.filter(msg => msg !== messageToDelete));
+        } else {
+          setSentMessages(sentMessages.filter(msg => msg !== messageToDelete));
+        }
+        showToast("Message deleted successfully");
+      } else {
+        showToast(data.message || "Failed to delete message", "error");
+      }
+    } catch (err) {
+      showToast("Error deleting message", "error");
     }
   };
 
