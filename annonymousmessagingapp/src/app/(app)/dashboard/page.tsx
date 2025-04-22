@@ -156,6 +156,14 @@ export default function Dashboard() {
     }
   };
 
+  const deleteMessage = (messageToDelete: string, isInbox: boolean) => {
+    if (isInbox) {
+      setInboxMessages(inboxMessages.filter(msg => msg !== messageToDelete));
+    } else {
+      setSentMessages(sentMessages.filter(msg => msg !== messageToDelete));
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#e3f6f5] text-[#272343] p-6 flex flex-col items-center gap-6 relative">
       {toastMsg && (
@@ -173,7 +181,19 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold mb-2">Inbox</h2>
         <ul className="text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
           {inboxMessages.length > 0 ? (
-            inboxMessages.map((msg, i) => <li key={i}>{msg}</li>)
+            inboxMessages.map((msg, i) => (
+              <li key={i} className="flex justify-between items-center">
+                {msg}
+                <Button
+                  onClick={() => deleteMessage(msg, true)}
+                  variant="destructive"
+                  size="sm"
+                  className="ml-2"
+                >
+                  Delete
+                </Button>
+              </li>
+            ))
           ) : (
             <li>No messages yet</li>
           )}
@@ -229,7 +249,19 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold mb-2">Sent Messages</h2>
         <ul className="text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
           {sentMessages.length > 0 ? (
-            sentMessages.map((msg, i) => <li key={i}>{msg}</li>)
+            sentMessages.map((msg, i) => (
+              <li key={i} className="flex justify-between items-center">
+                {msg}
+                <Button
+                  onClick={() => deleteMessage(msg, false)}
+                  variant="destructive"
+                  size="sm"
+                  className="ml-2"
+                >
+                  Delete
+                </Button>
+              </li>
+            ))
           ) : (
             <li>No sent messages</li>
           )}
