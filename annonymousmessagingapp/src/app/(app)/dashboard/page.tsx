@@ -158,10 +158,10 @@ export default function Dashboard() {
 
   const deleteMessage = async (messageToDelete: string, isInbox: boolean) => {
     try {
-      const res = await fetch("/api/delete-message", {
-        method: "DELETE", // Using DELETE method instead of POST
+      const res = await fetch(`/api/delete-message/${messageToDelete}`, {
+        method: "DELETE", 
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageToDelete, isInbox }),
+        body: JSON.stringify({ isInbox }),
       });
 
       const data = await res.json();
