@@ -1,11 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toast } from "@/components/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
 import { MessageSquare } from "lucide-react";
+
+interface ToastMessage {
+  title: string;
+  type?: "error" | "success";
+}
 
 export default function Dashboard() {
   const [recipient, setRecipient] = useState("");
@@ -16,10 +21,7 @@ export default function Dashboard() {
   const [acceptingMessages, setAcceptingMessages] = useState(true);
   const [userSuggestions, setUserSuggestions] = useState<string[]>([]);
   const [showUserSuggestions, setShowUserSuggestions] = useState(false);
-  const [toastMsg, setToastMsg] = useState<{
-    title: string;
-    type?: "error" | "success";
-  } | null>(null);
+  const [toastMsg, setToastMsg] = useState<ToastMessage | null>(null);
   const [userPrompt, setUserPrompt] = useState("");
 
   useEffect(() => {
@@ -44,15 +46,16 @@ export default function Dashboard() {
         body: JSON.stringify({ username: recipient, content: message }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
         setSentMessages((prev) => [...prev, message]);
         setMessage("");
-        showToast("Message sent successfully", "success");
+        showToast("Message sent successfully");
       } else {
-        const error = await res.json();
-        showToast(error.message || "Failed to send message", "error");
+        showToast(data.message || "Failed to send message", "error");
       }
-    } catch (error) {
+    } catch (err) {
       showToast("Something went wrong", "error");
     }
   };
@@ -64,43 +67,33 @@ export default function Dashboard() {
         const data = await res.json();
         setAcceptingMessages(data.isAcceptingMessage);
       }
-    } catch (error) {
-      console.error("Error fetching accepting status", error);
+    } catch (err) {
+      console.error("Error fetching accepting status:", err);
     }
   };
 
   const toggleAcceptingMessages = async () => {
     const newStatus = !acceptingMessages;
-  
-    const res = await fetch("/api/accept-messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ acceptMessages: newStatus }),
-    });
-  
-    if (res.ok) {
+
+    try {
+      const res = await fetch("/api/accept-messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acceptMessages: newStatus }),
+      });
+
       const data = await res.json();
-      console.log("Toggle API response:", data);
-  
-      const updatedStatus = data?.updatedUser?.isAcceptingMessages;
-  
-      if (typeof updatedStatus === "boolean") {
-        setAcceptingMessages(updatedStatus);
-        setToastMsg({
-          title: `Now ${updatedStatus ? "accepting" : "not accepting"} messages`,
-          type: "success",
-        });
+
+      if (res.ok && typeof data?.updatedUser?.isAcceptingMessages === "boolean") {
+        setAcceptingMessages(data.updatedUser.isAcceptingMessages);
+        showToast(`Now ${data.updatedUser.isAcceptingMessages ? "accepting" : "not accepting"} messages`);
       } else {
-        setToastMsg({ title: "Unexpected response format", type: "error" });
+        showToast("Unexpected response format", "error");
       }
-    } else {
-      setToastMsg({ title: "Failed to update message preference", type: "error" });
+    } catch (err) {
+      showToast("Failed to update message preference", "error");
     }
   };
-  
-  
 
   const fetchInboxMessages = async () => {
     try {
@@ -109,8 +102,8 @@ export default function Dashboard() {
         const data = await res.json();
         setInboxMessages(data.messages.map((m: any) => m.content));
       }
-    } catch (error) {
-      console.error("Error fetching inbox messages", error);
+    } catch (err) {
+      console.error("Error fetching inbox messages:", err);
     }
   };
 
@@ -128,11 +121,11 @@ export default function Dashboard() {
       const res = await fetch(`/api/usernames?q=${value}`);
       if (res.ok) {
         const data = await res.json();
-        setUserSuggestions(data.usernames);
+        setUserSuggestions(data.usernames || []);
         setShowUserSuggestions(true);
       }
-    } catch (error) {
-      console.error("Error fetching usernames:", error);
+    } catch (err) {
+      console.error("Error fetching usernames:", err);
     }
   };
 
@@ -148,8 +141,9 @@ export default function Dashboard() {
         body: JSON.stringify({ prompt: userPrompt }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
-        const data = await res.json();
         setAiSuggestions(data.suggestions || []);
         if (!data.suggestions?.length) {
           showToast("No suggestions found", "error");
@@ -157,7 +151,7 @@ export default function Dashboard() {
       } else {
         showToast("Failed to fetch AI suggestions", "error");
       }
-    } catch (error) {
+    } catch (err) {
       showToast("Something went wrong", "error");
     }
   };
@@ -206,7 +200,7 @@ export default function Dashboard() {
                     onClick={() => {
                       setRecipient(name);
                       setShowUserSuggestions(false);
-                      showToast(`Selected ${name}`, "success");
+                      showToast(`Selected ${name}`);
                     }}
                   >
                     {name}
@@ -215,7 +209,6 @@ export default function Dashboard() {
               </ul>
             </div>
           )}
-
           <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
@@ -248,21 +241,18 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold flex items-center">
           <MessageSquare className="mr-2 h-5 w-5 text-indigo-500" /> AI Suggestions
         </h2>
-
         <Input
           value={userPrompt}
           onChange={(e) => setUserPrompt(e.target.value)}
           placeholder="Enter your prompt for suggestions..."
           className="border border-gray-300 mb-4"
         />
-
         <Button
           onClick={fetchAISuggestions}
           className="w-full text-white bg-gradient-to-r from-purple-500 to-indigo-600"
         >
           Get Suggestions
         </Button>
-
         <ul className="mt-2 text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
           {aiSuggestions.map((s, i) => (
             <li key={i}>{s}</li>
@@ -270,7 +260,7 @@ export default function Dashboard() {
         </ul>
       </div>
 
-      {/* Toggle Accepting Messages */}
+      {/* Accepting Messages Toggle */}
       <div className="absolute bottom-6 left-6">
         <Button
           onClick={toggleAcceptingMessages}
