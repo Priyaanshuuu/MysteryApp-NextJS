@@ -158,21 +158,19 @@ export default function Dashboard() {
 
   const deleteMessage = async (messageToDelete: string, isInbox: boolean) => {
     try {
-      // Make API call to delete the message from both the sender and recipient
       const res = await fetch("/api/delete-message", {
-        method: "POST",
+        method: "DELETE", // Using DELETE method instead of POST
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: messageToDelete, isInbox, sender: "currentUsername" }), // Pass the current user information to delete properly
+        body: JSON.stringify({ message: messageToDelete, isInbox }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        // Remove message locally based on whether it's in inbox or sent
         if (isInbox) {
-          setInboxMessages(inboxMessages.filter(msg => msg !== messageToDelete));
+          setInboxMessages(inboxMessages.filter((msg) => msg !== messageToDelete));
         } else {
-          setSentMessages(sentMessages.filter(msg => msg !== messageToDelete));
+          setSentMessages(sentMessages.filter((msg) => msg !== messageToDelete));
         }
         showToast("Message deleted successfully");
       } else {
