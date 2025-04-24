@@ -59,7 +59,7 @@ export default function VerificationEmail({ username, otp }: VerificationEmailPr
         </Row>
 
         <Row>
-          <a href={`https://yourwebsite.com/verify/${username}`}
+          <a href={`http://localhost:3000/verify/${email}`}
             style={{
               display: "block",
               width: "200px",
