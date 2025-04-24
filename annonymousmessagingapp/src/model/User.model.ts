@@ -25,7 +25,8 @@ export interface User extends Document {
   verifyCodeExpiry: Date;
   isVerified: boolean;
   isAcceptingMessage: boolean;
-  messages: Message[]; // FIXED: 'message' -> 'messages'
+  messages: Message[];
+  sentMessages: Message[]; // Added for sent messages support
 }
 
 const UserSchema: Schema<User> = new Schema({
@@ -61,7 +62,8 @@ const UserSchema: Schema<User> = new Schema({
     type: Boolean,
     default: true,
   },
-  messages: [MessageSchema], // FIXED: renamed to 'messages'
+  messages: [MessageSchema],       // inbox
+  sentMessages: [MessageSchema],   // outbox
 });
 
 const UserModel =
