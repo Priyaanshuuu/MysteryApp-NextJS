@@ -1,13 +1,13 @@
-import { connectDB } from "@/lib/db"; // Make sure this connects properly
+import  dbConnect  from "@/lib/dbConnect"; // Make sure this connects properly
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth/[...nextauth]/options"; // Adjust path to authOptions file
+import { authOptions } from "@/app/api/auth/[...nextauth]/options"; // Adjust path to authOptions file
 import UserModel from "@/model/User.model"; // Correct model import path if needed
 import mongoose from "mongoose";
 
 export async function DELETE(req: Request, { params }: { params: { messageid: string } }) {
   try {
     // Connect to the database
-    await connectDB();
+    await dbConnect();
 
     // Get the session
     const session = await getServerSession(authOptions);
