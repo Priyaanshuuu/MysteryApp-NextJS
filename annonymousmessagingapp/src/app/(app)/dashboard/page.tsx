@@ -156,38 +156,6 @@ export default function Dashboard() {
     }
   };
 
-  const deleteMessage = async (messageId: string, isInbox: boolean) => {
-    try {
-      const res = await fetch(`/api/delete-message/${messageId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isInbox }),
-      });
-  
-      const data = await res.json();
-  
-      if (res.ok) {
-        if (isInbox) {
-          setInboxMessages(prev => prev.filter(msg => msg._id !== messageId));
-        } else {
-          setSentMessages(prev => prev.filter(msg => msg._id !== messageId));
-        }
-        showToast("Message deleted successfully");
-      } else {
-        showToast(data.message || "Failed to delete message", "error");
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Error deleting message", "error");
-    }
-  };
-  
-  
-  
-  
-
   return (
     <div className="min-h-screen bg-[#e3f6f5] text-[#272343] p-6 flex flex-col items-center gap-6 relative">
       {toastMsg && (
@@ -205,19 +173,7 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold mb-2">Inbox</h2>
         <ul className="text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
           {inboxMessages.length > 0 ? (
-            inboxMessages.map((msg, i) => (
-              <li key={i} className="flex justify-between items-center">
-                {msg}
-                <Button
-                  onClick={() => deleteMessage(msg, true)}
-                  variant="destructive"
-                  size="sm"
-                  className="ml-2"
-                >
-                  Delete
-                </Button>
-              </li>
-            ))
+            inboxMessages.map((msg, i) => <li key={i}>{msg}</li>)
           ) : (
             <li>No messages yet</li>
           )}
@@ -273,19 +229,7 @@ export default function Dashboard() {
         <h2 className="text-lg font-semibold mb-2">Sent Messages</h2>
         <ul className="text-sm text-gray-700 max-h-40 overflow-auto space-y-1 list-disc list-inside">
           {sentMessages.length > 0 ? (
-            sentMessages.map((msg, i) => (
-              <li key={i} className="flex justify-between items-center">
-                {msg}
-                <Button
-                  onClick={() => deleteMessage(msg, false)}
-                  variant="destructive"
-                  size="sm"
-                  className="ml-2"
-                >
-                  Delete
-                </Button>
-              </li>
-            ))
+            sentMessages.map((msg, i) => <li key={i}>{msg}</li>)
           ) : (
             <li>No sent messages</li>
           )}
