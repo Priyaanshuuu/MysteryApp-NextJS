@@ -15,8 +15,7 @@ interface VerificationEmailProps {
   email: string;
 }
 
-
-export default function VerificationEmail({ username, otp }: VerificationEmailProps) {
+export default function VerificationEmail({ username, otp, email }: VerificationEmailProps) {
   return (
     <Html lang="en" dir="ltr">
       <Head>
@@ -49,31 +48,35 @@ export default function VerificationEmail({ username, otp }: VerificationEmailPr
         </Row>
 
         <Row>
-          <Text style={{
-            fontSize: '22px',
-            fontWeight: 'bold',
-            color: '#007bff',
-            textAlign: 'center',
-            letterSpacing: '2px',
-          }}>
+          <Text
+            style={{
+              fontSize: '22px',
+              fontWeight: 'bold',
+              color: '#007bff',
+              textAlign: 'center',
+              letterSpacing: '2px',
+            }}
+          >
             {otp}
           </Text>
         </Row>
 
         <Row>
-          <a href={`http://localhost:3000/verify/${email}`}
+          <a
+            href={`http://localhost:3000/verify/${email}`}
             style={{
-              display: "block",
-              width: "200px",
-              margin: "20px auto",
-              padding: "10px 20px",
-              backgroundColor: "#007bff",
-              color: "#ffffff",
-              textDecoration: "none",
-              borderRadius: "5px",
-              fontWeight: "bold",
-              textAlign: "center",
-            }}>
+              display: 'block',
+              width: '200px',
+              margin: '20px auto',
+              padding: '10px 20px',
+              backgroundColor: '#007bff',
+              color: '#ffffff',
+              textDecoration: 'none',
+              borderRadius: '5px',
+              fontWeight: 'bold',
+              textAlign: 'center',
+            }}
+          >
             Verify Now
           </a>
         </Row>
