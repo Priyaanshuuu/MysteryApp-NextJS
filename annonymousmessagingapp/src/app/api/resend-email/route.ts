@@ -17,6 +17,7 @@ export async function POST(req: Request): Promise<Response> {
       return new Response(JSON.stringify({ success: false, message: "Email is required" }), { status: 400 });
     }
 
+    // Check if the user exists in the database
     const user = await UserModel.findOne({ email });
     if (!user) {
       return new Response(JSON.stringify({ success: false, message: "User not found" }), { status: 404 });
@@ -30,16 +31,23 @@ export async function POST(req: Request): Promise<Response> {
 
     // ✅ Use ReactDOMServer instead of @react-email/render
     const emailHtml: string = ReactDOMServer.renderToStaticMarkup(
-      <VerificationEmail username={user.username} otp={otp} />
+      <VerificationEmail username={user.username} otp={otp} email={user.email} />
     );
+    
 
-    // Send email
+    // Log email content for debugging
+    console.log("Generated Email HTML:", emailHtml);
+
+    // Send email using Resend API
     const response = await resend.emails.send({
       from: "Acme <onboarding@resend.dev>",
       to: [email],
       subject: "Your Verification Code",
       html: emailHtml,
     });
+
+    // Log the response from Resend
+    console.log("Resend API Response:", response);
 
     return new Response(JSON.stringify({ success: true, message: "Verification email sent", response }), { status: 200 });
 
